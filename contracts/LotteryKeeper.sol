@@ -131,9 +131,9 @@ contract LotteryKeeper is KeeperCompatibleInterface {
         require(drawState == DRAW_STATE.RANDOM, "Incorrect state");
 
         uint256 did = requestIdDrawId[requestId]; // get draw id
-        // drawIdWinningDraw[did][0] = winningDraw[0];
-        // drawIdWinningDraw[did][1] = winningDraw[1];
-        // drawIdWinningDraw[did][2] = winningDraw[2];
+        drawIdWinningDraw[did].push(winningDraw[0]);
+        drawIdWinningDraw[did].push(winningDraw[1]);
+        drawIdWinningDraw[did].push(winningDraw[2]);
         s_randomWords = winningDraw;
 
         drawState = DRAW_STATE.CLAIM;
