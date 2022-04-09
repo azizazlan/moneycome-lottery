@@ -2,7 +2,7 @@
 pragma solidity ^0.8.7;
 
 interface IGovernance {
-    function lotteryKeeper() external view returns (address);
+    function keeperCompatibleDraw() external view returns (address);
 
-    function vrfConsumerLottery() external view returns (address);
+    function vrfConsumerDraw() external view returns (address);
 }

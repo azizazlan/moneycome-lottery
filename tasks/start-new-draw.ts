@@ -14,9 +14,9 @@ task('start', 'Initialise new bet session')
     const contractAddr = `${process.env.UPKEEP_CONTRACT_ADDR}`;
     const duration = taskArgs.duration;
 
-    const contract = (await ethers.getContractFactory('LotteryKeeper')).attach(
-      contractAddr,
-    );
+    const contract = (
+      await ethers.getContractFactory('KeeperCompatibleDraw')
+    ).attach(contractAddr);
     const tx = await contract.startNewDraw(duration);
     const receipt = await tx.wait();
     console.log(receipt);

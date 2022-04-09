@@ -18,10 +18,10 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
   console.log(
     `\nDeploying VRFConsumerV2 contract that uses Subscription Id ${subscriptionId} ...`,
   );
-  const VRFConsumerLotteryFactory = await ethers.getContractFactory(
-    'VRFConsumerLottery',
+  const VRFConsumerDrawFactory = await ethers.getContractFactory(
+    'VRFConsumerDraw',
   );
-  const vrf = await VRFConsumerLotteryFactory.deploy(
+  const vrf = await VRFConsumerDrawFactory.deploy(
     vrfCoordinatorContractAddr,
     linkAddr,
     subscriptionId,
@@ -35,20 +35,22 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
   // Bet
   const upkeepInterval = `${process.env.UPKEEP_INTERVAL_SECS}`;
   console.log(
-    `\nDeploying LotteryKeeper contract with upkeep interval of ${upkeepInterval} seconds ...`,
+    `\nDeploying KeeperCompatibleDraw contract with upkeep interval of ${upkeepInterval} seconds ...`,
   );
-  const LotteryKeeperFactory = await ethers.getContractFactory('LotteryKeeper');
-  const lotteryKeeper = await LotteryKeeperFactory.deploy(
+  const KeeperCompatibleDrawFactory = await ethers.getContractFactory(
+    'KeeperCompatibleDraw',
+  );
+  const keeper = await KeeperCompatibleDrawFactory.deploy(
     upkeepInterval,
     governance.address,
   );
-  console.log(`Chainlink Upkeep deployed at ${lotteryKeeper.address}`);
+  console.log(`Chainlink Upkeep deployed at ${keeper.address}`);
   console.log(
     `Register this new Upkeep contract at https://keepers.chain.link/chapel`,
   );
 
   console.log(`\nInit governanace...`);
-  const tx = await governance.init(lotteryKeeper.address, vrf.address);
+  const tx = await governance.init(keeper.address, vrf.address);
   const receipt = await tx.wait();
 
   console.log(receipt);

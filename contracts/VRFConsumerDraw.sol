@@ -4,10 +4,10 @@ pragma solidity 0.8.7;
 import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-import {ILotteryKeeper} from "./interfaces/ILotteryKeeper.sol";
+import {IKeeperCompatibleDraw} from "./interfaces/IKeeperCompatibleDraw.sol";
 import {IGovernance} from "./interfaces/IGovernance.sol";
 
-contract VRFConsumerLottery is VRFConsumerBaseV2 {
+contract VRFConsumerDraw is VRFConsumerBaseV2 {
     // Your subscription ID.
     uint64 s_subscriptionId;
 
@@ -94,7 +94,7 @@ contract VRFConsumerLottery is VRFConsumerBaseV2 {
         s_requestId = requestId;
         s_randomWords = randomWords;
 
-        ILotteryKeeper(igov.lotteryKeeper()).setWinningDraw(
+        IKeeperCompatibleDraw(igov.keeperCompatibleDraw()).setWinningDraw(
             requestId,
             randomWords
         );

@@ -11,9 +11,9 @@ task('state', 'Get the bet state').setAction(async (taskArgs, hre) => {
   const { ethers } = hre;
   const contractAddr = `${process.env.UPKEEP_CONTRACT_ADDR}`;
 
-  const contract = (await ethers.getContractFactory('LotteryKeeper')).attach(
-    contractAddr,
-  );
+  const contract = (
+    await ethers.getContractFactory('KeeperCompatibleDraw')
+  ).attach(contractAddr);
 
   console.log(DRAW_STATE[await contract.drawState()]);
 });

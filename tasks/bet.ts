@@ -1,11 +1,11 @@
 import { task } from 'hardhat/config';
 
 task('bet', 'Bet')
-  .addParam('team', '1 or 2')
+  .addParam('no', '4 digits')
   .addParam('bet', 'in ether, for example 0.00015')
   .addParam('account', 'index account, example 0 is the first account')
   .setAction(async (taskArgs, hre) => {
-    enum BET_STATE {
+    enum DRAW_STATE {
       OPEN,
       CLOSED,
       RANDOM,
@@ -13,13 +13,15 @@ task('bet', 'Bet')
     }
 
     const { ethers } = hre;
-    const contract = `${process.env.VITE_BET_CONTRACT_ADDR}`;
+    const contractAddr = `${process.env.UPKEEP_CONTRACT_ADDR}`;
 
     const accounts = await ethers.getSigners();
 
-    const bet = (await ethers.getContractFactory('Bet')).attach(contract);
+    const contract = (
+      await ethers.getContractFactory('KeeperCompatibleDraw')
+    ).attach(contractAddr);
 
-    const minBetAmountWei = await bet.MINIMUM_BET();
+    const minBetAmountWei = await contract.MINIMUM_BET();
 
     const minBetAmount = ethers.utils.formatUnits(
       ethers.BigNumber.from(minBetAmountWei),
@@ -61,14 +63,15 @@ task('bet', 'Bet')
       console.log(`You can bet Team 1 or Team 2`);
       return;
     }
-    const state = await bet.betState();
+    const state = await contract.drawState();
 
-    if (state !== BET_STATE.OPEN) {
-      console.log('Bet session close!');
+    if (state !== DRAW_STATE.OPEN) {
+      console.log('Lottery session close!');
       return;
     }
 
-    const tx = await bet.connect(account).bet(team, { value: userBetWei });
+    const no = taskArgs.no;
+    const tx = await contract.connect(account).play(no, { value: userBetWei });
     const receipt = await tx.wait();
     console.log(receipt);
   });

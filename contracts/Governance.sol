@@ -1,37 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/utils/Counters.sol';
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract Governance {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
 
     uint256 public oneTime;
-    address public lotteryKeeper;
-    address public vrfConsumerLottery;
+    address public keeperCompatibleDraw;
+    address public vrfConsumerDraw;
 
     constructor() {
         _tokenIdCounter.increment();
         oneTime = _tokenIdCounter.current();
     }
 
-    function init(
-        address lotteryKeeperAddress,
-        address vrfConsumerLotteryAddress
-    ) public {
+    function init(address keeperCompatibleDrawAddr, address vrfConsumerDrawAddr)
+        public
+    {
+        require(vrfConsumerDrawAddr != address(0), "no vrfConsumerDrawAddr");
         require(
-            vrfConsumerLotteryAddress != address(0),
-            'no governance/vrfConsumerLottery'
+            keeperCompatibleDrawAddr != address(0),
+            "no keeperCompatibleDrawAddr"
         );
-        require(
-            lotteryKeeperAddress != address(0),
-            'no-lottery-keeper-address-given'
-        );
-        require(oneTime > 0, 'can-only-be-called-once');
+        require(oneTime > 0, "only call once");
 
-        lotteryKeeper = lotteryKeeperAddress;
-        vrfConsumerLottery = vrfConsumerLotteryAddress;
+        keeperCompatibleDraw = keeperCompatibleDrawAddr;
+        vrfConsumerDraw = vrfConsumerDrawAddr;
 
         _tokenIdCounter.decrement();
         oneTime = _tokenIdCounter.current();

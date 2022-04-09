@@ -5,12 +5,17 @@ pragma solidity ^0.8.7;
 // ./interfaces/KeeperCompatibleInterface.sol
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import {IVRFConsumerLottery} from "./interfaces/IVRFConsumerLottery.sol";
+import {IVRFConsumerDraw} from "./interfaces/IVRFConsumerDraw.sol";
 import {IGovernance} from "./interfaces/IGovernance.sol";
 
-contract LotteryKeeper is KeeperCompatibleInterface {
+contract KeeperCompatibleDraw is KeeperCompatibleInterface {
     event NewDraw(uint256 indexed drawId);
-    event GainsClaimed(address indexed claimant, uint256 value);
+    event GainsClaimed(
+        address indexed claimant,
+        uint256 value,
+        uint256 winningDigits,
+        uint256 userDigits
+    );
     event Staked(address indexed player, uint256 value, uint256 digits);
     event DrawAnnounced(uint256 drawId, uint256[] winningDraw);
 
@@ -42,6 +47,11 @@ contract LotteryKeeper is KeeperCompatibleInterface {
 
     // minimum bet is .00015 ETH
     uint256 public MINIMUM_BET = 0.00015 * 10**18;
+
+    // Prizes - value chosen arbitrarily
+    uint256 public FIRST_PRIZE = 0.15 * 10**18;
+    uint256 public SECOND_PRIZE = 0.05 * 10**18;
+    uint256 public THIRD_PRIZE = 0.025 * 10**18;
 
     uint256 public immutable interval;
     uint256 public lastTimeStamp;
@@ -91,8 +101,12 @@ contract LotteryKeeper is KeeperCompatibleInterface {
     }
 
     function claim() public {
-        require(hasPlayerPlacedBet(msg.sender), "Player has not played");
+        require(hasPlayerPlacedBet(msg.sender), "Player not in list");
         require(drawState == DRAW_STATE.CLAIM, "Incorrect state");
+
+        uint256 prize = FIRST_PRIZE;
+        uint256 winningDigits = drawIdWinningDraw[drawId][0];
+        uint256 userDigits = players[msg.sender].digits;
 
         // uint256 senderBet = players[msg.sender].amountBet;
 
@@ -103,7 +117,7 @@ contract LotteryKeeper is KeeperCompatibleInterface {
         // clean up
         delete players[msg.sender];
 
-        emit GainsClaimed(msg.sender, 0);
+        emit GainsClaimed(msg.sender, prize, winningDigits, userDigits);
     }
 
     function hasPlayerPlacedBet(address playerAddress)
@@ -117,7 +131,7 @@ contract LotteryKeeper is KeeperCompatibleInterface {
     function pickWinningDraw() private {
         require(drawState == DRAW_STATE.RANDOM, "Incorrect state");
 
-        uint256 requestId = IVRFConsumerLottery(igov.vrfConsumerLottery())
+        uint256 requestId = IVRFConsumerDraw(igov.vrfConsumerDraw())
             .requestWinningDraw();
 
         s_requestId = requestId;
@@ -130,10 +144,19 @@ contract LotteryKeeper is KeeperCompatibleInterface {
     {
         require(drawState == DRAW_STATE.RANDOM, "Incorrect state");
 
-        uint256 did = requestIdDrawId[requestId]; // get draw id
-        drawIdWinningDraw[did].push(winningDraw[0]);
-        drawIdWinningDraw[did].push(winningDraw[1]);
-        drawIdWinningDraw[did].push(winningDraw[2]);
+        // draw id
+        uint256 did = requestIdDrawId[requestId];
+
+        // reduce to 4 digits
+        uint256 fourdigits = (winningDraw[0] % 10000) - 1;
+        drawIdWinningDraw[did].push(fourdigits);
+
+        fourdigits = (winningDraw[1] % 10000) - 1;
+        drawIdWinningDraw[did].push(fourdigits);
+
+        fourdigits = (winningDraw[2] % 10000) - 1;
+        drawIdWinningDraw[did].push(fourdigits);
+
         s_randomWords = winningDraw;
 
         drawState = DRAW_STATE.CLAIM;
