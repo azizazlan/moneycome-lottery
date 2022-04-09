@@ -10,12 +10,7 @@ import {IGovernance} from "./interfaces/IGovernance.sol";
 
 contract KeeperCompatibleDraw is KeeperCompatibleInterface {
     event NewDraw(uint256 indexed drawId);
-    event GainsClaimed(
-        address indexed claimant,
-        uint256 value,
-        uint256 winningDigits,
-        uint256 userDigits
-    );
+    event GainsClaimed(address indexed claimant, uint256 prize);
     event Staked(address indexed player, uint256 value, uint256 digits);
     event DrawAnnounced(uint256 drawId, uint256[] winningDraw);
 
@@ -73,6 +68,14 @@ contract KeeperCompatibleDraw is KeeperCompatibleInterface {
         drawIdCounter.increment();
     }
 
+    receive() external payable {
+        // Do something
+    }
+
+    function getContractBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
     /// Initialise a new draw session
     /// @param duration in seconds for a new draw and claiming sessions
     function startNewDraw(uint256 duration) public {
@@ -101,23 +104,31 @@ contract KeeperCompatibleDraw is KeeperCompatibleInterface {
     }
 
     function claim() public {
-        require(hasPlayerPlacedBet(msg.sender), "Player not in list");
         require(drawState == DRAW_STATE.CLAIM, "Incorrect state");
+        require(hasPlayerPlacedBet(msg.sender), "Player not in list");
+        require(hasPlayerWon(msg.sender), "Player lost");
 
-        uint256 prize = FIRST_PRIZE;
-        uint256 winningDigits = drawIdWinningDraw[drawId][0];
+        uint256 prize;
         uint256 userDigits = players[msg.sender].digits;
 
-        // uint256 senderBet = players[msg.sender].amountBet;
+        if (userDigits == drawIdWinningDraw[drawId][0]) {
+            prize = FIRST_PRIZE;
+        }
+        if (userDigits == drawIdWinningDraw[drawId][1]) {
+            prize = SECOND_PRIZE;
+        }
+        if (userDigits == drawIdWinningDraw[drawId][2]) {
+            prize = THIRD_PRIZE;
+        }
 
-        // (bool success, ) = msg.sender.call{ value: total }('');
+        (bool success, ) = msg.sender.call{value: prize}("");
 
-        // require(success, 'Transfer failed');
+        require(success, "Transfer failed");
 
         // clean up
         delete players[msg.sender];
 
-        emit GainsClaimed(msg.sender, prize, winningDigits, userDigits);
+        emit GainsClaimed(msg.sender, prize);
     }
 
     function hasPlayerPlacedBet(address playerAddress)
@@ -126,6 +137,20 @@ contract KeeperCompatibleDraw is KeeperCompatibleInterface {
         returns (bool)
     {
         return players[playerAddress].drawId == drawId;
+    }
+
+    function hasPlayerWon(address playerAddress) public view returns (bool) {
+        uint256 userDigits = players[playerAddress].digits;
+
+        // Player won when his numbers match any of the first, second or third prize number
+        if (
+            userDigits == drawIdWinningDraw[drawId][0] ||
+            userDigits == drawIdWinningDraw[drawId][1] ||
+            userDigits == drawIdWinningDraw[drawId][2]
+        ) {
+            return true;
+        }
+        return false;
     }
 
     function pickWinningDraw() private {
@@ -147,7 +172,7 @@ contract KeeperCompatibleDraw is KeeperCompatibleInterface {
         // draw id
         uint256 did = requestIdDrawId[requestId];
 
-        // reduce to 4 digits
+        // Reduce to 4 digits. There are three winning prizes; first, second and third place.
         uint256 fourdigits = (winningDraw[0] % 10000) - 1;
         drawIdWinningDraw[did].push(fourdigits);
 
@@ -156,6 +181,20 @@ contract KeeperCompatibleDraw is KeeperCompatibleInterface {
 
         fourdigits = (winningDraw[2] % 10000) - 1;
         drawIdWinningDraw[did].push(fourdigits);
+
+        // START TESTING
+        // uint256 first = 65237367840995691791037444202571953548149283008744462358132421008753727641639;
+        // uint256 fourdigits = (first % 10000) - 1;
+        // drawIdWinningDraw[did].push(fourdigits);
+
+        // uint256 second = 69718720022744266635288021941284383327431551282589957548486363367314376140960;
+        // fourdigits = (second % 10000) - 1;
+        // drawIdWinningDraw[did].push(fourdigits);
+
+        // uint256 third = 90574700480603757870434099306867474662467717804341916486748550723967215698377;
+        // fourdigits = (third % 10000) - 1;
+        // drawIdWinningDraw[did].push(fourdigits);
+        // END TESTING
 
         s_randomWords = winningDraw;
 
