@@ -63,7 +63,7 @@ task('bet', 'Bet')
       console.log(`You can bet Team 1 or Team 2`);
       return;
     }
-    const state = await contract.drawState();
+    const state = await contract.s_drawState();
 
     if (state !== DRAW_STATE.OPEN) {
       console.log('Lottery session close!');

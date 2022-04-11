@@ -15,7 +15,7 @@ task('state', 'Get the bet state').setAction(async (taskArgs, hre) => {
     await ethers.getContractFactory('KeeperCompatibleDraw')
   ).attach(contractAddr);
 
-  console.log(DRAW_STATE[await contract.drawState()]);
+  console.log(DRAW_STATE[await contract.s_drawState()]);
 });
 
 export default {};

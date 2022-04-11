@@ -51,9 +51,7 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
 
   console.log(`\nInit governanace...`);
   const tx = await governance.init(keeper.address, vrf.address);
-  const receipt = await tx.wait();
-
-  console.log(receipt);
+  await tx.wait();
 });
 
 export default {};

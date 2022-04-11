@@ -8,10 +8,10 @@ task('result', 'Get the winning digits').setAction(async (taskArgs, hre) => {
     await ethers.getContractFactory('KeeperCompatibleDraw')
   ).attach(contractAddr);
 
-  const i: number = ethers.BigNumber.from(await contract.drawId()).toNumber();
-  let first = await contract.drawIdWinningDraw(ethers.BigNumber.from(i), 0);
-  let second = await contract.drawIdWinningDraw(ethers.BigNumber.from(i), 1);
-  let third = await contract.drawIdWinningDraw(ethers.BigNumber.from(i), 2);
+  const i: number = ethers.BigNumber.from(await contract.s_drawId()).toNumber();
+  let first = await contract.s_drawIdWinningDraw(ethers.BigNumber.from(i), 0);
+  let second = await contract.s_drawIdWinningDraw(ethers.BigNumber.from(i), 1);
+  let third = await contract.s_drawIdWinningDraw(ethers.BigNumber.from(i), 2);
 
   console.log(first);
   console.log(second);

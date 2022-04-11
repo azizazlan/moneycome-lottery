@@ -41,7 +41,7 @@ contract VRFConsumerDraw is VRFConsumerBaseV2 {
     // this limit based on the network that you select, the size of the request,
     // and the processing of the callback request in the fulfillRandomWords()
     // function.
-    uint32 callbackGasLimit = 500000;
+    uint32 callbackGasLimit = 200000;
 
     // The default is 3, but you can set this higher.
     uint16 requestConfirmations = 3;
@@ -55,19 +55,19 @@ contract VRFConsumerDraw is VRFConsumerBaseV2 {
     uint256 public s_requestId;
     address s_owner;
 
-    IGovernance public igov;
+    IGovernance public s_iGovernance;
 
     constructor(
         address vrfCoordinator,
         address link,
         uint64 subscriptionId,
-        address igovAddr
+        address iGovernance
     ) VRFConsumerBaseV2(vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         LINKTOKEN = LinkTokenInterface(link);
         s_owner = msg.sender;
         s_subscriptionId = subscriptionId;
-        igov = IGovernance(igovAddr);
+        s_iGovernance = IGovernance(iGovernance);
     }
 
     function requestWinningDraw() external returns (uint256) {
@@ -94,10 +94,8 @@ contract VRFConsumerDraw is VRFConsumerBaseV2 {
         s_requestId = requestId;
         s_randomWords = randomWords;
 
-        IKeeperCompatibleDraw(igov.keeperCompatibleDraw()).setWinningDraw(
-            requestId,
-            randomWords
-        );
+        IKeeperCompatibleDraw(s_iGovernance.keeperCompatibleDraw())
+            .setWinningDraw(requestId, randomWords);
     }
 
     modifier onlyOwner() {

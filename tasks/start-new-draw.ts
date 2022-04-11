@@ -18,9 +18,8 @@ task('start', 'Initialise new bet session')
       await ethers.getContractFactory('KeeperCompatibleDraw')
     ).attach(contractAddr);
     const tx = await contract.startNewDraw(duration);
-    const receipt = await tx.wait();
-    console.log(receipt);
-    console.log(DRAW_STATE[await contract.drawState()]);
+    await tx.wait();
+    console.log(DRAW_STATE[await contract.s_drawState()]);
   });
 
 export default {};
